@@ -1,0 +1,27 @@
+default_branches = []
+
+[[repositories]]
+id = "aho-corasick"
+github = "BurntSushi/aho-corasick"
+clone_url = "https://github.com/BurntSushi/aho-corasick.git"
+enabled = true
+monitored_branches = ["master"]
+
+[repositories.indexing]
+languages = ["rust"]
+analyzers = ["tree-sitter"]
+scip_enabled = false
+joern_enabled = false
+
+[[repositories]]
+id = "memchr"
+github = "BurntSushi/memchr"
+clone_url = "https://github.com/BurntSushi/memchr.git"
+enabled = true
+monitored_branches = ["master"]
+
+[repositories.indexing]
+languages = ["rust"]
+analyzers = ["tree-sitter"]
+scip_enabled = false
+joern_enabled = false

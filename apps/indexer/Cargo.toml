@@ -1,0 +1,35 @@
+[package]
+name = "ckg-indexer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "ckg-indexer"
+path = "src/main.rs"
+
+[dependencies]
+ckg-domain.workspace = true
+ckg-git.workspace = true
+ckg-repository-config.workspace = true
+ckg-tree-sitter-analyzer.workspace = true
+ckg-normalizer.workspace = true
+ckg-graph-delta.workspace = true
+ckg-links.workspace = true
+ckg-neo4j-store.workspace = true
+ckg-graph-api.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+ckg-mcp-server.workspace = true
+tower = { workspace = true, features = ["util"] }

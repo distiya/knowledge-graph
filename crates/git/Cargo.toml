@@ -1,0 +1,18 @@
+[package]
+name = "ckg-git"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+ckg-domain.workspace = true
+ckg-langs.workspace = true
+gix.workspace = true
+linguist.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

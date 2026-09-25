@@ -1,0 +1,14 @@
+# Build artifacts
+/target/
+
+# Index cache: OSS test clones (contain their own .git) + link/contract state
+/.ckg-cache/
+
+# Secrets (track .env.example instead)
+.env
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp

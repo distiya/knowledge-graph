@@ -1,0 +1,17 @@
+[package]
+name = "ckg-links"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+ckg-domain.workspace = true
+ckg-graph-delta.workspace = true
+ckg-neo4j-store.workspace = true
+ckg-repository-config.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

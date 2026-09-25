@@ -1,0 +1,19 @@
+[package]
+name = "ckg-mcp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "ckg-mcp"
+path = "src/main.rs"
+
+[dependencies]
+ckg-mcp-server.workspace = true
+ckg-graph-api.workspace = true
+ckg-neo4j-store.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

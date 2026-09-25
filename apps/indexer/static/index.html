@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CKG Indexer</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #1a2129;
+    --border: #2c3742;
+    --text: #d9e0e7;
+    --muted: #8a97a5;
+    --accent: #4dabf7;
+    --danger: #f0616d;
+    --ok: #3ddc97;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.45;
+  }
+  header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+  }
+  header h1 { font-size: 1.15rem; margin: 0; }
+  header span { color: var(--muted); font-size: 0.85rem; }
+  main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+  section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  h2 { font-size: 1rem; margin: 0 0 0.75rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; }
+  tr:last-child td { border-bottom: none; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; }
+  .muted { color: var(--muted); }
+  .ok { color: var(--ok); }
+  .warn { color: #ffd166; }
+  button {
+    background: var(--accent);
+    color: #06121c;
+    border: none;
+    border-radius: 5px;
+    padding: 0.35rem 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  button:hover { filter: brightness(1.1); }
+  button.danger { background: var(--danger); color: #fff; }
+  button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  input[type="text"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 5px;
+    padding: 0.4rem 0.55rem;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+  input[type="text"]:focus { outline: 1px solid var(--accent); }
+  form.add-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.6rem 0.8rem;
+    align-items: end;
+  }
+  label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.2rem; }
+  .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  #msg { min-height: 1.2rem; font-size: 0.85rem; margin-top: 0.6rem; }
+  #msg.error { color: var(--danger); }
+  #msg.ok { color: var(--ok); }
+  .branch-list { font-family: ui-monospace, monospace; font-size: 0.85em; }
+  .status-sha { font-family: ui-monospace, monospace; font-size: 0.78em; }
+  .row-actions { white-space: nowrap; }
+  input[type="checkbox"] { accent-color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>CKG Indexer</h1>
+  <span>repository admin &amp; index status</span>
+</header>
+<main>
+  <section>
+    <h2>Repositories</h2>
+    <table id="repos-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>GitHub / local path</th>
+          <th>Enabled</th>
+          <th>Branches</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="repos-body"></tbody>
+    </table>
+    <p class="muted" id="repos-empty" hidden>No repositories configured.</p>
+  </section>
+
+  <section>
+    <h2>Add repository</h2>
+    <form class="add-grid" id="add-form">
+      <div>
+        <label for="f-id">id *</label>
+        <input type="text" id="f-id" required placeholder="payments-api">
+      </div>
+      <div>
+        <label for="f-github">github *</label>
+        <input type="text" id="f-github" required placeholder="acme/payments-api">
+      </div>
+      <div>
+        <label for="f-clone">clone_url *</label>
+        <input type="text" id="f-clone" required placeholder="https://github.com/acme/repo.git">
+      </div>
+      <div>
+        <label for="f-local">local_path (optional)</label>
+        <input type="text" id="f-local" placeholder="/path/to/local/clone">
+      </div>
+      <div>
+        <label for="f-branches">branches (comma-separated) *</label>
+        <input type="text" id="f-branches" required placeholder="main, develop">
+      </div>
+      <div>
+        <label for="f-languages">languages (comma-separated)</label>
+        <input type="text" id="f-languages" placeholder="rust, typescript">
+      </div>
+      <div>
+        <button type="submit">Add repo</button>
+      </div>
+    </form>
+    <div id="msg"></div>
+  </section>
+
+  <section>
+    <h2>Default branches</h2>
+    <form class="add-grid" id="default-form">
+      <div style="grid-column: 1 / -2;">
+        <label for="f-defaults">comma-separated, used when a repo has no monitored branches</label>
+        <input type="text" id="f-defaults" placeholder="main, develop">
+      </div>
+      <div>
+        <button type="submit">Save</button>
+      </div>
+    </form>
+    <div id="msg-defaults"></div>
+  </section>
+
+  <section>
+    <h2>Status <span class="muted" style="font-weight:400">(refreshes every 15s)</span></h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Repo</th>
+          <th>Branch</th>
+          <th>Last indexed</th>
+          <th>Current</th>
+        </tr>
+      </thead>
+      <tbody id="status-body"></tbody>
+    </table>
+    <p class="muted" id="status-empty" hidden>No status yet.</p>
+  </section>
+</main>
+<script>
+(function () {
+  const $ = (sel) => document.querySelector(sel);
+
+  function setMsg(el, text, cls) {
+    el.textContent = text || "";
+    el.className = cls || "";
+  }
+
+  async function api(path, options) {
+    const resp = await fetch(path, options);
+    let body = null;
+    try {
+      const text = await resp.text();
+      body = text ? JSON.parse(text) : null;
+    } catch (e) {
+      body = null;
+    }
+    return { resp, body };
+  }
+
+  function csv(value) {
+    return value.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+  }
+
+  async function loadRepos() {
+    const { resp, body } = await api("/api/repos");
+    const tbody = $("#repos-body");
+    tbody.innerHTML = "";
+    const repos = resp.ok && Array.isArray(body) ? body : [];
+    $("#repos-empty").hidden = repos.length > 0;
+    for (const repo of repos) {
+      const tr = document.createElement("tr");
+      const source = repo.local_path
+        ? esc(repo.local_path) + ' <span class="muted">(local)</span>'
+        : esc(repo.github || "");
+      const branches = (repo.monitored_branches || []).join(", ");
+      tr.innerHTML =
+        "<td class='mono'>" + esc(repo.id) + "</td>" +
+        "<td>" + source + "</td>" +
+        "<td><input type='checkbox' data-id='" + esc(repo.id) + "' " +
+        (repo.enabled ? "checked" : "") + "></td>" +
+        "<td class='branch-list'>" + esc(branches) + "</td>" +
+        "<td class='row-actions actions'>" +
+        "<button class='ghost' data-reindex='" + esc(repo.id) + "'>Reindex</button>" +
+        "<button class='danger' data-delete='" + esc(repo.id) + "'>Delete</button>" +
+        "</td>";
+      tbody.appendChild(tr);
+    }
+
+    tbody.querySelectorAll("input[type=checkbox]").forEach((box) => {
+      box.addEventListener("change", async () => {
+        const id = box.getAttribute("data-id");
+        const { resp } = await api("/api/repos/" + encodeURIComponent(id), {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ enabled: box.checked }),
+        });
+        setMsg($("#msg"), resp.ok ? "Updated " + id : "Failed to update " + id, resp.ok ? "ok" : "error");
+        loadRepos();
+        loadStatus();
+      });
+    });
+
+    tbody.querySelectorAll("[data-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-delete");
+        if (!confirm("Delete repository '" + id + "'?")) return;
+        const { resp } = await api("/api/repos/" + encodeURIComponent(id), { method: "DELETE" });
+        setMsg($("#msg"), resp.ok ? "Deleted " + id : "Delete failed", resp.ok ? "ok" : "error");
+        loadRepos();
+        loadStatus();
+      });
+    });
+
+    tbody.querySelectorAll("[data-reindex]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-reindex");
+        const { resp, body } = await api("/api/repos/" + encodeURIComponent(id) + "/index", {
+          method: "POST",
+        });
+        const status = body && body.status ? body.status : "";
+        if (resp.status === 202) {
+          setMsg($("#msg"), "Index started for " + id, "ok");
+        } else if (resp.status === 409) {
+          setMsg($("#msg"), "Index already running for " + id, "error");
+        } else {
+          setMsg($("#msg"), "Reindex failed: " + (body && body.error ? body.error : resp.status), "error");
+        }
+      });
+    });
+  }
+
+  $("#add-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const languages = csv($("#f-languages").value);
+    const localPath = $("#f-local").value.trim();
+    const payload = {
+      id: $("#f-id").value.trim(),
+      github: $("#f-github").value.trim(),
+      clone_url: $("#f-clone").value.trim(),
+      enabled: true,
+      monitored_branches: csv($("#f-branches").value),
+      indexing: {
+        languages: languages,
+        analyzers: ["tree-sitter"],
+        scip_enabled: false,
+        joern_enabled: false,
+      },
+    };
+    if (localPath) payload.local_path = localPath;
+    const { resp, body } = await api("/api/repos", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (resp.ok) {
+      setMsg($("#msg"), "Added " + payload.id, "ok");
+      ev.target.reset();
+      loadRepos();
+      loadStatus();
+    } else {
+      setMsg($("#msg"), (body && body.error) || ("HTTP " + resp.status), "error");
+    }
+  });
+
+  async function loadDefaults() {
+    const { resp, body } = await api("/api/default-branches");
+    if (resp.ok && body && Array.isArray(body.default_branches)) {
+      $("#f-defaults").value = body.default_branches.join(", ");
+    }
+  }
+
+  $("#default-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const { resp, body } = await api("/api/default-branches", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ default_branches: csv($("#f-defaults").value) }),
+    });
+    if (resp.ok) {
+      setMsg($("#msg-defaults"), "Saved default branches", "ok");
+      loadStatus();
+    } else {
+      setMsg($("#msg-defaults"), (body && body.error) || ("HTTP " + resp.status), "error");
+    }
+  });
+
+  async function loadStatus() {
+    const { resp, body } = await api("/api/status");
+    const tbody = $("#status-body");
+    tbody.innerHTML = "";
+    if (!resp.ok || !Array.isArray(body)) {
+      $("#status-empty").hidden = false;
+      $("#status-empty").textContent = "Status unavailable.";
+      return;
+    }
+    $("#status-empty").hidden = body.length > 0;
+    for (const repo of body) {
+      const branches = repo.branches || [];
+      if (branches.length === 0) {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          "<td class='mono'>" + esc(repo.id) + "</td>" +
+          "<td colspan='3' class='muted'>no branches / not cloned</td>";
+        tbody.appendChild(tr);
+        continue;
+      }
+      branches.forEach((b, i) => {
+        const tr = document.createElement("tr");
+        const last = b.last_sha
+          ? "<span class='status-sha'>" + esc(short(b.last_sha)) + "</span>"
+          : "<span class='muted'>-</span>";
+        let current;
+        if (b.current_sha) {
+          const cls = b.last_sha === b.current_sha ? "ok" : "warn";
+          current = "<span class='status-sha " + cls + "'>" + esc(short(b.current_sha)) + "</span>";
+        } else {
+          current = "<span class='muted'>not resolved</span>";
+        }
+        tr.innerHTML =
+          (i === 0 ? "<td class='mono' rowspan='" + branches.length + "'>" + esc(repo.id) + "</td>" : "") +
+          "<td class='mono'>" + esc(b.branch) + "</td>" +
+          "<td>" + last + "</td>" +
+          "<td>" + current + "</td>";
+        tbody.appendChild(tr);
+      });
+    }
+  }
+
+  function short(sha) {
+    return sha.length > 12 ? sha.slice(0, 12) : sha;
+  }
+
+  loadRepos();
+  loadDefaults();
+  loadStatus();
+  setInterval(loadStatus, 15000);
+})();
+</script>
+</body>
+</html>

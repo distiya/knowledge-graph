@@ -1,0 +1,51 @@
+default_branches = ["main", "develop"]
+
+# Cross-repository service dependency linking (enabled by default).
+[links]
+enabled = true
+# Base URL / host prefix -> repository id (raises match confidence):
+# base_urls = { "https://api.orders.internal" = "payments-api" }
+# Channel name -> broker hint:
+# channel_brokers = { "billing.ready" = "kafka" }
+# Resource alias -> canonical identity (optional "<resource_type>:" prefix
+# overrides the extracted type; registry matches raise confidence to high):
+# resources = { "legacy-exports" = "bucket:s3://legacy-prod-exports" }
+
+[[repositories]]
+id = "payments-api"
+github = "acme/payments-api"
+clone_url = "https://github.com/acme/payments-api.git"
+enabled = true
+monitored_branches = ["main", "release"]
+
+[repositories.indexing]
+languages = ["rust", "sql"]
+analyzers = ["tree-sitter", "scip"]
+scip_enabled = true
+joern_enabled = false
+
+[[repositories]]
+id = "web-portal"
+github = "acme/web-portal"
+clone_url = "https://github.com/acme/web-portal.git"
+enabled = true
+monitored_branches = ["main"]
+
+[repositories.indexing]
+languages = ["typescript", "javascript"]
+analyzers = ["tree-sitter"]
+scip_enabled = false
+joern_enabled = false
+
+[[repositories]]
+id = "legacy-billing"
+github = "acme/legacy-billing"
+clone_url = "https://github.com/acme/legacy-billing.git"
+enabled = false
+monitored_branches = ["master"]
+
+[repositories.indexing]
+languages = ["python"]
+analyzers = ["tree-sitter"]
+scip_enabled = false
+joern_enabled = true
