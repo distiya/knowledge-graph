@@ -1,0 +1,31 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (Local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "qwen3:8b": {
+          "name": "qwen3:8b"
+        }
+      }
+    }
+  },
+  "mcp": {
+    "ckg": {
+      "type": "local",
+      "command": ["cargo", "run", "-q", "-p", "ckg-mcp"],
+      "cwd": "/home/disti/Documents/coding/knowledge-graph",
+      "environment": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_PASSWORD": "testpassword"
+      },
+      "enabled": true,
+      "timeout": 30000
+    }
+  }
+}

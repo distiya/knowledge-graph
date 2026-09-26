@@ -1,27 +1,15 @@
-default_branches = []
+default_branches = ["main"]
 
 [[repositories]]
-id = "aho-corasick"
-github = "BurntSushi/aho-corasick"
-clone_url = "https://github.com/BurntSushi/aho-corasick.git"
+id = "taskboard"
+github = "distiya/taskboard"
+clone_url = "https://github.com/distiya/taskboard.git"
+local_path = "/home/disti/Documents/coding/poc/taskboard"
 enabled = true
-monitored_branches = ["master"]
+monitored_branches = []
 
 [repositories.indexing]
-languages = ["rust"]
+languages = []
 analyzers = ["tree-sitter"]
-scip_enabled = false
-joern_enabled = false
-
-[[repositories]]
-id = "memchr"
-github = "BurntSushi/memchr"
-clone_url = "https://github.com/BurntSushi/memchr.git"
-enabled = true
-monitored_branches = ["master"]
-
-[repositories.indexing]
-languages = ["rust"]
-analyzers = ["tree-sitter"]
-scip_enabled = false
-joern_enabled = false
+scip_enabled = true
+joern_enabled = true
